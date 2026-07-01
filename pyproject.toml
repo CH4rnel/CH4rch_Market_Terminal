@@ -1,0 +1,31 @@
+[project]
+name = "ch4rch-market-terminal"
+version = "0.1.0"
+description = "Next-generation crypto market terminal"
+readme = "README.md"
+requires-python = ">=3.12"
+
+authors = [
+{ name = "CH4rch" }
+]
+
+dependencies = [
+"pydantic>=2.11",
+"pydantic-settings>=2.10",
+"PyYAML>=6.0",
+"structlog>=25.4",
+"httpx>=0.28",
+]
+
+[project.scripts]
+ch4rch-terminal = "ch4rch_market.__main__:main"
+
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
