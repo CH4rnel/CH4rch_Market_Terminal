@@ -11,11 +11,8 @@ logs/
 
 # CACHE / TEMP
 
-cache/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+logs/*
+!logs/.gitkeep
 
 # CONFIG SECRETS
 
