@@ -1,0 +1,39 @@
+app:
+  name: CH4rch Market Terminal
+  version: 0.1.0
+  environment: development
+
+server:
+  host: 0.0.0.0
+  port: 8080
+
+logging:
+  level: INFO
+  format: json
+
+database:
+  type: sqlite
+  path: database/ch4rch.db
+
+cache:
+  enabled: true
+  ttl_seconds: 5
+
+providers:
+  dexscreener:
+    enabled: true
+    rate_limit: 1
+
+  binance:
+    enabled: true
+
+  coinbase:
+    enabled: true
+
+analysis:
+  enabled: true
+  indicators:
+    - rsi
+    - ema
+    - macd
+    - vwap

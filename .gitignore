@@ -1,0 +1,67 @@
+# SYSTEM
+
+.DS_Store
+*.swp
+*.swo
+
+# LOGS
+
+logs/
+*.log
+
+# CACHE / TEMP
+
+cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# CONFIG SECRETS
+
+.env
+.env.*
+*.key
+*.pem
+
+config/local.*
+configs/local.*
+configs/secrets.*
+
+# DATABASE
+
+database/sqlite/
+*.db
+*.sqlite3
+
+# BUILD/DIST
+
+dist/
+build/
+*.egg-info/
+
+# FRONTEND
+
+node_modules/
+frontend/dist/
+frontend/build/
+
+# TEST/CACHE ARTIFACTS
+
+.pytest_cache/
+.coverage
+
+# IDE
+
+.vscode/
+.idea/
+
+# PYTHON VENV
+
+venv/
+.env/
+
+# BACKEND SECRETS
+
+backend/**/secrets.*
+backend/**/.env
