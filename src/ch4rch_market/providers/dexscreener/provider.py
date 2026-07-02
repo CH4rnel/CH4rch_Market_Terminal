@@ -8,6 +8,7 @@ from ch4rch_market.providers.base import BaseProvider
 from ch4rch_market.providers.dexscreener.client import (
     DexScreenerClient,
 )
+from ch4rch_market.providers.dexscreener.models import PairInfo
 
 
 class DexScreenerProvider(BaseProvider):
@@ -29,3 +30,16 @@ class DexScreenerProvider(BaseProvider):
     async def healthcheck(self) -> bool:
 
         return True
+
+    async def get_pair(
+        self,
+        chain: str,
+        pair_address: str,
+    ) -> PairInfo:
+
+        data = await self.client.get_pair(
+            chain,
+            pair_address,
+        )
+
+        return PairInfo.model_validate(data["pair"])

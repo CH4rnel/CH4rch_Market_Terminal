@@ -4,10 +4,12 @@
 # DexScreener models.
 
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TokenInfo(BaseModel):
+
+    model_config = ConfigDict(populate_by_name=True)
 
     symbol: str
     name: str
@@ -16,10 +18,12 @@ class TokenInfo(BaseModel):
 
 class PairInfo(BaseModel):
 
-    chain_id: str
-    dex_id: str
+    model_config = ConfigDict(populate_by_name=True)
 
-    price_usd: float
+    chain_id: str = Field(alias="chainId")
+    dex_id: str = Field(alias="dexId")
 
-    base_token: TokenInfo
-    quote_token: TokenInfo
+    price_usd: str = Field(alias="priceUsd")
+
+    base_token: TokenInfo = Field(alias="baseToken")
+    quote_token: TokenInfo = Field(alias="quoteToken")

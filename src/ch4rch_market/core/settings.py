@@ -1,5 +1,6 @@
 # ♃ ☿ 𓂀  OCCULT CONFIG LAYER 𓂀  ☿ ♃
 
+
 # Application settings and configuration management.
 
 
@@ -13,8 +14,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
 class Settings(BaseSettings):
+    """
+    Global application settings.
 
-# Global application settings.
+    Supports:
+    - environment variables
+    - default values
+    """
 
     app_name: str = Field(
         default="CH4rch Market Terminal",
