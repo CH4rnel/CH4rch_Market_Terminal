@@ -1,4 +1,4 @@
-# ♃ ☿ 𓂀 OCCULT CONFIG LAYER 𓂀 ☿ ♃
+# ♃ ☿ 𓂀  OCCULT CONFIG LAYER 𓂀  ☿ ♃
 
 
 # DexScreener provider.
