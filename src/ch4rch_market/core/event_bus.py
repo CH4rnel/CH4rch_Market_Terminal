@@ -1,50 +1,68 @@
-# ♃ ☿ 𓂀 OCCULT CONFIG LAYER 𓂀 ☿ ♃
+# ♃ ☿ 𓂀  OCCULT CONFIG LAYER 𓂀  ☿ ♃
 
 
-# Application event bus.
+# Asynchronous event bus implementation.
 
 
 from collections import defaultdict
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 
-from ch4rch_market.core.events import BaseEvent
+from ch4rch_market.events.base import Event
 
 
-EventHandler = Callable[[BaseEvent], None]
+EventHandler = Callable[[Event], Awaitable[None]]
 
 
 class EventBus:
 
-# In-memory synchronous event bus.
+# Simple asynchronous event bus.
 
 
     def __init__(self) -> None:
-
-        self._handlers: dict[
-            type[BaseEvent],
-            list[EventHandler],
-        ] = defaultdict(list)
+        self._handlers: dict[str, list[EventHandler]] = defaultdict(list)
 
     def subscribe(
         self,
-        event_type: type[BaseEvent],
+        event_type: str,
         handler: EventHandler,
     ) -> None:
 
 # Register event handler.
 
 
-        self._handlers[event_type].append(handler)
+        if handler not in self._handlers[event_type]:
+            self._handlers[event_type].append(handler)
 
-    def publish(
+    def unsubscribe(
         self,
-        event: BaseEvent,
+        event_type: str,
+        handler: EventHandler,
     ) -> None:
 
-# Publish event.
+# Remove event handler.
 
 
-        handlers = self._handlers.get(type(event), [])
+        if handler in self._handlers[event_type]:
+            self._handlers[event_type].remove(handler)
+
+    async def publish(
+        self,
+        event: Event,
+    ) -> None:
+
+# Publish event to all subscribers.
+
+
+        handlers = self._handlers.get(
+            event.event_type,
+            [],
+        )
 
         for handler in handlers:
-            handler(event)
+            try:
+                await handler(event)
+
+            except Exception as error:
+                print(
+                    f"Event handler failed: {error}"
+                )

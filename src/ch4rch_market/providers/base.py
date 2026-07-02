@@ -1,36 +1,42 @@
-# ♃ ☿ 𓂀 OCCULT CONFIG LAYER 𓂀 ☿ ♃
+# ♃ ☿ 𓂀  OCCULT CONFIG LAYER 𓂀  ☿ ♃
 
 
-# Base provider interfaces.
+# Base provider interface.
 
 
 from abc import ABC, abstractmethod
 
+from ch4rch_market.core.event_bus import EventBus
+
 
 class BaseProvider(ABC):
 
-# Base class for all market providers.
+# Base class for all market data providers.
 
 
-    name: str
+    def __init__(
+        self,
+        event_bus: EventBus,
+    ) -> None:
+        self.event_bus = event_bus
 
+    @property
     @abstractmethod
-    async def connect(self) -> None:
+    def name(self) -> str:
 
-# Initialize provider connection.
+# Provider name.
 
         ...
 
     @abstractmethod
-    async def close(self) -> None:
+    async def start(self) -> None:
 
-# Close provider connection.
-
+# Start provider.
         ...
 
     @abstractmethod
-    async def healthcheck(self) -> bool:
+    async def stop(self) -> None:
 
-# Check provider availability.
+# Stop provider.
 
         ...

@@ -1,20 +1,20 @@
-# ♃ ☿ 𓂀 OCCULT CONFIG LAYER 𓂀 ☿ ♃
+# ♃ ☿ 𓂀  OCCULT CONFIG LAYER 𓂀  ☿ ♃
 
 
-# DexScreener provider.
+# Binance provider.
 
 
 from ch4rch_market.providers.base import BaseProvider
 
 
-class DexScreenerProvider(BaseProvider):
+class BinanceProvider(BaseProvider):
 
-# DexScreener market data provider.
+# Binance market data provider.
 
 
     @property
     def name(self) -> str:
-        return "dexscreener"
+        return "binance"
 
     async def start(self) -> None:
         print(f"{self.name}: started")
