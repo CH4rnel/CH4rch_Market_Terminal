@@ -7,14 +7,15 @@ from ch4rch_market.core.event_bus import EventBus
 from ch4rch_market.core.lifecycle import RuntimeState
 from ch4rch_market.core.logger import logger
 from ch4rch_market.core.logger import setup_logging
+from ch4rch_market.core.modules.manager import ModuleManager
 from ch4rch_market.core.registry import ServiceRegistry
+from ch4rch_market.services.runtime.system import SystemModule
 
 
 class Runtime:
     """Main application runtime."""
 
     def __init__(self) -> None:
-
         self.settings = settings
 
         setup_logging(
@@ -27,10 +28,20 @@ class Runtime:
 
         self.registry = ServiceRegistry()
 
+        self.module_manager = ModuleManager()
+
         self.state = RuntimeState.CREATED
 
-    async def start(self) -> None:
+        self._register_modules()
 
+    def _register_modules(self) -> None:
+        """Register built-in runtime modules."""
+
+        self.module_manager.register(
+            SystemModule(),
+        )
+
+    async def start(self) -> None:
         self.state = RuntimeState.INITIALIZING
 
         self.registry.register(
@@ -48,12 +59,19 @@ class Runtime:
             self.event_bus,
         )
 
+        self.registry.register(
+            "module_manager",
+            self.module_manager,
+        )
+
         self.state = RuntimeState.STARTING
 
         self.logger.info(
             "runtime_started",
             version=self.settings.version,
         )
+
+        await self.module_manager.start_all()
 
         self.state = RuntimeState.RUNNING
 
@@ -62,12 +80,13 @@ class Runtime:
         )
 
     async def stop(self) -> None:
-
         self.state = RuntimeState.STOPPING
 
         self.logger.info(
             "runtime_stopping",
         )
+
+        await self.module_manager.stop_all()
 
         self.registry.clear()
 
