@@ -1,45 +1,30 @@
 # ♃ ☿ 𓂀  OCCULT CONFIG LAYER 𓂀  ☿ ♃
 
-
-# Application logging configuration.
-
-
 import logging
-import sys
 
 import structlog
 
 
-def setup_logging() -> None:
-
-# Configure application logging.
-
+def setup_logging(
+    level: str = "INFO",
+) -> None:
 
     logging.basicConfig(
+        level=level,
         format="%(message)s",
-        stream=sys.stdout,
-        level=logging.INFO,
     )
 
     structlog.configure(
         processors=[
             structlog.processors.TimeStamper(
-                fmt="iso",
+                fmt="iso"
             ),
             structlog.processors.add_log_level,
-            structlog.dev.ConsoleRenderer(),
+            structlog.processors.JSONRenderer(),
         ],
-        wrapper_class=structlog.make_filtering_bound_logger(
-            logging.INFO,
-        ),
-        logger_factory=structlog.PrintLoggerFactory(),
-        cache_logger_on_first_use=True,
     )
 
 
-def get_logger(name: str):
+def get_logger():
 
-# Return configured logger instance.
-
-
-    return structlog.get_logger(name)
+    return structlog.get_logger()

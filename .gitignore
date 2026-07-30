@@ -62,3 +62,16 @@ venv/
 
 backend/**/secrets.*
 backend/**/.env
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+
+# IDE
+.idea/
+.vscode/
