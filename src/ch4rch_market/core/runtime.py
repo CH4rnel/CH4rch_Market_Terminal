@@ -1,46 +1,78 @@
-from ch4rch_market.config.settings import (
-    get_settings,
-)
+# ♃ ☿ 𓂀  OCCULT CONFIG LAYER 𓂀  ☿ ♃
 
+from __future__ import annotations
+
+from ch4rch_market.config.settings import settings
 from ch4rch_market.core.event_bus import EventBus
-from ch4rch_market.core.logger import get_logger
-
-from ch4rch_market.events.system import (
-    SystemStarted,
-    SystemStopped,
-)
+from ch4rch_market.core.lifecycle import RuntimeState
+from ch4rch_market.core.logger import logger
+from ch4rch_market.core.logger import setup_logging
+from ch4rch_market.core.registry import ServiceRegistry
 
 
 class Runtime:
+    """Main application runtime."""
 
+    def __init__(self) -> None:
 
-    def __init__(self):
+        self.settings = settings
 
-        self.settings = get_settings()
+        setup_logging(
+            self.settings.log_level,
+        )
+
+        self.logger = logger
 
         self.event_bus = EventBus()
 
-        self.logger = get_logger()
+        self.registry = ServiceRegistry()
 
+        self.state = RuntimeState.CREATED
 
-    async def start(self):
+    async def start(self) -> None:
+
+        self.state = RuntimeState.INITIALIZING
+
+        self.registry.register(
+            "settings",
+            self.settings,
+        )
+
+        self.registry.register(
+            "logger",
+            self.logger,
+        )
+
+        self.registry.register(
+            "event_bus",
+            self.event_bus,
+        )
+
+        self.state = RuntimeState.STARTING
 
         self.logger.info(
-            "runtime_starting",
-            app=self.settings.app_name,
+            "runtime_started",
+            version=self.settings.version,
         )
 
-        await self.event_bus.publish(
-            SystemStarted()
-        )
-
-
-    async def stop(self):
-
-        await self.event_bus.publish(
-            SystemStopped()
-        )
+        self.state = RuntimeState.RUNNING
 
         self.logger.info(
-            "runtime_stopped"
+            "runtime_running",
+        )
+
+    async def stop(self) -> None:
+
+        self.state = RuntimeState.STOPPING
+
+        self.logger.info(
+            "runtime_stopping",
+        )
+
+        self.registry.clear()
+
+        self.state = RuntimeState.STOPPED
+
+        self.logger.info(
+            "runtime_stopped",
         )

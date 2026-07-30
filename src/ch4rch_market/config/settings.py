@@ -1,12 +1,14 @@
 # ♃ ☿ 𓂀  OCCULT CONFIG LAYER 𓂀  ☿ ♃
 
+from __future__ import annotations
+
 from functools import lru_cache
 
-from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class AppSettings(BaseSettings):
+    """Application configuration."""
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -28,3 +30,6 @@ class AppSettings(BaseSettings):
 @lru_cache
 def get_settings() -> AppSettings:
     return AppSettings()
+
+
+settings = get_settings()

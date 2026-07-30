@@ -5,30 +5,28 @@ from __future__ import annotations
 import asyncio
 
 from collections import defaultdict
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable
+from collections.abc import Callable
 
-import structlog
-
+from ch4rch_market.core.logger import logger
 from ch4rch_market.events.base import Event
-
-
-logger = structlog.get_logger()
 
 
 EventHandler = Callable[
     [Event],
-    Awaitable[None]
+    Awaitable[None],
 ]
 
 
 class EventBus:
+    """Simple asynchronous event bus."""
 
     def __init__(self) -> None:
+
         self._handlers: dict[
             str,
-            list[EventHandler]
+            list[EventHandler],
         ] = defaultdict(list)
-
 
     def subscribe(
         self,
@@ -37,8 +35,9 @@ class EventBus:
     ) -> None:
 
         if handler not in self._handlers[event_type]:
-            self._handlers[event_type].append(handler)
-
+            self._handlers[event_type].append(
+                handler,
+            )
 
     def unsubscribe(
         self,
@@ -46,11 +45,12 @@ class EventBus:
         handler: EventHandler,
     ) -> None:
 
-        handlers = self._handlers.get(event_type)
+        handlers = self._handlers.get(
+            event_type,
+        )
 
         if handlers and handler in handlers:
             handlers.remove(handler)
-
 
     async def publish(
         self,
@@ -65,18 +65,13 @@ class EventBus:
         if not handlers:
             return
 
-
-        tasks = [
-            handler(event)
-            for handler in handlers
-        ]
-
-
         results = await asyncio.gather(
-            *tasks,
+            *(
+                handler(event)
+                for handler in handlers
+            ),
             return_exceptions=True,
         )
-
 
         for result in results:
 

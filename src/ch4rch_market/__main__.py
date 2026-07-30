@@ -1,39 +1,28 @@
-# ♃ ☿ 𓂀 OCCULT CONFIG LAYER 𓂀 ☿ ♃
+# ♃ ☿ 𓂀  OCCULT CONFIG LAYER 𓂀  ☿ ♃
+
+from __future__ import annotations
 
 import asyncio
 
-from ch4rch_market.core.bootstrap import (
-    create_runtime,
-)
-
-from ch4rch_market.core.logger import (
-    setup_logging,
-)
-
-from ch4rch_market.config.settings import (
-    get_settings,
-)
+from ch4rch_market.core.runtime import Runtime
 
 
-async def run():
+async def run() -> None:
 
-    settings = get_settings()
+    runtime = Runtime()
 
-    setup_logging(
-        settings.log_level
+    try:
+        await runtime.start()
+
+    finally:
+        await runtime.stop()
+
+
+def main() -> None:
+
+    asyncio.run(
+        run(),
     )
-
-    runtime = await create_runtime()
-
-    await runtime.start()
-
-    await runtime.stop()
-
-
-
-def main():
-
-    asyncio.run(run())
 
 
 if __name__ == "__main__":

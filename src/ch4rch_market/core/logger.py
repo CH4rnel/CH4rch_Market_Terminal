@@ -1,5 +1,9 @@
 # ♃ ☿ 𓂀  OCCULT CONFIG LAYER 𓂀  ☿ ♃
 
+# ♃ ☿ 𓂀  OCCULT CONFIG LAYER 𓂀  ☿ ♃
+
+from __future__ import annotations
+
 import logging
 
 import structlog
@@ -8,6 +12,7 @@ import structlog
 def setup_logging(
     level: str = "INFO",
 ) -> None:
+    """Configure application logging."""
 
     logging.basicConfig(
         level=level,
@@ -16,15 +21,11 @@ def setup_logging(
 
     structlog.configure(
         processors=[
-            structlog.processors.TimeStamper(
-                fmt="iso"
-            ),
+            structlog.processors.TimeStamper(fmt="iso"),
             structlog.processors.add_log_level,
             structlog.processors.JSONRenderer(),
         ],
     )
 
 
-def get_logger():
-
-    return structlog.get_logger()
+logger = structlog.get_logger()
