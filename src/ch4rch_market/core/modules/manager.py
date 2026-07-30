@@ -7,26 +7,60 @@ from ch4rch_market.core.modules.base import Module
 
 
 class ModuleManager:
-    """Runtime module manager."""
+    """
+    Runtime module manager.
+
+    Responsible for:
+    - module registration
+    - module lookup
+    - lifecycle control
+    """
 
     def __init__(self) -> None:
-        self._modules: list[Module] = []
+
+        self._modules: dict[str, Module] = {}
+
 
     def register(
         self,
         module: Module,
     ) -> None:
+        """
+        Register module.
 
-        self._modules.append(module)
+        Module names must be unique.
+        """
+
+        if module.name in self._modules:
+            raise ValueError(
+                f"Module '{module.name}' already registered"
+            )
+
+        self._modules[module.name] = module
 
         logger.info(
             "module_registered",
             module=module.name,
         )
 
-    async def start_all(self) -> None:
 
-        for module in self._modules:
+    def get(
+        self,
+        name: str,
+    ) -> Module:
+        """
+        Get module by name.
+        """
+
+        return self._modules[name]
+
+
+    async def start_all(self) -> None:
+        """
+        Start all registered modules.
+        """
+
+        for module in self._modules.values():
 
             logger.info(
                 "module_start",
@@ -35,9 +69,17 @@ class ModuleManager:
 
             await module.start()
 
-    async def stop_all(self) -> None:
 
-        for module in reversed(self._modules):
+    async def stop_all(self) -> None:
+        """
+        Stop all registered modules.
+
+        Modules are stopped in reverse order.
+        """
+
+        for module in reversed(
+            list(self._modules.values())
+        ):
 
             logger.info(
                 "module_stop",

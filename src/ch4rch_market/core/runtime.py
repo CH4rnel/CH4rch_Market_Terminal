@@ -9,13 +9,23 @@ from ch4rch_market.core.logger import logger
 from ch4rch_market.core.logger import setup_logging
 from ch4rch_market.core.modules.manager import ModuleManager
 from ch4rch_market.core.registry import ServiceRegistry
+from ch4rch_market.providers.registry import ProviderRegistry
 from ch4rch_market.services.runtime.system import SystemModule
 
 
 class Runtime:
-    """Main application runtime."""
+    """
+    Main application runtime.
+
+    Responsible for:
+    - application lifecycle
+    - core services initialization
+    - module management
+    - provider management
+    """
 
     def __init__(self) -> None:
+
         self.settings = settings
 
         setup_logging(
@@ -30,19 +40,30 @@ class Runtime:
 
         self.module_manager = ModuleManager()
 
+        self.provider_registry = ProviderRegistry()
+
         self.state = RuntimeState.CREATED
 
         self._register_modules()
 
+
     def _register_modules(self) -> None:
-        """Register built-in runtime modules."""
+        """
+        Register internal application modules.
+        """
 
         self.module_manager.register(
             SystemModule(),
         )
 
+
     async def start(self) -> None:
+        """
+        Start runtime.
+        """
+
         self.state = RuntimeState.INITIALIZING
+
 
         self.registry.register(
             "settings",
@@ -64,33 +85,53 @@ class Runtime:
             self.module_manager,
         )
 
+        self.registry.register(
+            "provider_registry",
+            self.provider_registry,
+        )
+
+
         self.state = RuntimeState.STARTING
+
 
         self.logger.info(
             "runtime_started",
             version=self.settings.version,
         )
 
+
         await self.module_manager.start_all()
 
+
         self.state = RuntimeState.RUNNING
+
 
         self.logger.info(
             "runtime_running",
         )
 
+
     async def stop(self) -> None:
+        """
+        Stop runtime.
+        """
+
         self.state = RuntimeState.STOPPING
+
 
         self.logger.info(
             "runtime_stopping",
         )
 
+
         await self.module_manager.stop_all()
+
 
         self.registry.clear()
 
+
         self.state = RuntimeState.STOPPED
+
 
         self.logger.info(
             "runtime_stopped",

@@ -1,21 +1,15 @@
+# ♃ ☿ 𓂀  OCCULT CONFIG LAYER 𓂀  ☿ ♃
+
 from dataclasses import dataclass
 
-from .base import Event
+from ch4rch_market.events.base import Event
 
 
-@dataclass
+@dataclass(slots=True)
 class SystemStarted(Event):
-
-    def __init__(self):
-        super().__init__(
-            event_type="system.started"
-        )
+    pass
 
 
-@dataclass
+@dataclass(slots=True)
 class SystemStopped(Event):
-
-    def __init__(self):
-        super().__init__(
-            event_type="system.stopped"
-        )
+    pass

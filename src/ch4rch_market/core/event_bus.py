@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import asyncio
-
 from collections import defaultdict
 from collections.abc import Awaitable
 from collections.abc import Callable
+from typing import Type
 
-from ch4rch_market.core.logger import logger
 from ch4rch_market.events.base import Event
+from ch4rch_market.core.logger import logger
 
 
 EventHandler = Callable[
@@ -19,38 +18,41 @@ EventHandler = Callable[
 
 
 class EventBus:
-    """Simple asynchronous event bus."""
+    """
+    Typed asynchronous event bus.
+    """
 
     def __init__(self) -> None:
 
         self._handlers: dict[
-            str,
+            Type[Event],
             list[EventHandler],
         ] = defaultdict(list)
 
+
     def subscribe(
         self,
-        event_type: str,
+        event_type: Type[Event],
         handler: EventHandler,
     ) -> None:
 
         if handler not in self._handlers[event_type]:
             self._handlers[event_type].append(
-                handler,
+                handler
             )
+
 
     def unsubscribe(
         self,
-        event_type: str,
+        event_type: Type[Event],
         handler: EventHandler,
     ) -> None:
 
-        handlers = self._handlers.get(
-            event_type,
-        )
+        if handler in self._handlers[event_type]:
+            self._handlers[event_type].remove(
+                handler
+            )
 
-        if handlers and handler in handlers:
-            handlers.remove(handler)
 
     async def publish(
         self,
@@ -58,28 +60,19 @@ class EventBus:
     ) -> None:
 
         handlers = self._handlers.get(
-            event.event_type,
+            type(event),
             [],
         )
 
-        if not handlers:
-            return
+        for handler in handlers:
 
-        results = await asyncio.gather(
-            *(
-                handler(event)
-                for handler in handlers
-            ),
-            return_exceptions=True,
-        )
+            try:
+                await handler(event)
 
-        for result in results:
+            except Exception as error:
 
-            if isinstance(
-                result,
-                Exception,
-            ):
                 logger.error(
                     "event_handler_failed",
-                    error=str(result),
+                    error=str(error),
+                    event=type(event).__name__,
                 )
