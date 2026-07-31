@@ -1,42 +1,38 @@
 # ♃ ☿ 𓂀  OCCULT CONFIG LAYER 𓂀  ☿ ♃
 
+from __future__ import annotations
 
-# Base provider interface.
+from abc import abstractmethod
 
-
-from abc import ABC, abstractmethod
-
-from ch4rch_market.core.event_bus import EventBus
+from ch4rch_market.core.modules.base import Module
 
 
-class BaseProvider(ABC):
+class Provider(Module):
+    """
+    Base interface for market data providers.
+    """
 
-# Base class for all market data providers.
-
-
-    def __init__(
-        self,
-        event_bus: EventBus,
-    ) -> None:
-        self.event_bus = event_bus
 
     @property
     @abstractmethod
     def name(self) -> str:
-
-# Provider name.
-
+        """
+        Provider unique name.
+        """
         ...
 
-    @abstractmethod
-    async def start(self) -> None:
 
-# Start provider.
+    @abstractmethod
+    async def connect(self) -> None:
+        """
+        Initialize provider connection.
+        """
         ...
 
+
     @abstractmethod
-    async def stop(self) -> None:
-
-# Stop provider.
-
+    async def disconnect(self) -> None:
+        """
+        Close provider connection.
+        """
         ...
