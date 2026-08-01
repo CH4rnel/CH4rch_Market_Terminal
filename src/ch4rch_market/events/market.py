@@ -1,32 +1,50 @@
 # ♃ ☿ 𓂀  OCCULT CONFIG LAYER 𓂀  ☿ ♃
 
+from __future__ import annotations
 
-# Market events.
-
+from dataclasses import dataclass
+from decimal import Decimal
 
 from ch4rch_market.events.base import Event
 
 
-class PriceUpdateEvent(Event):
+@dataclass(slots=True)
+class MarketEvent(Event):
+    """
+    Base market event.
+    """
 
-# Market price update.
-
-
-    event_type: str = "market.price"
-
-    exchange: str
     symbol: str
-    price: float
+
+    def __post_init__(self) -> None:
+        self.event_type = "market"
 
 
-class OrderBookUpdateEvent(Event):
+@dataclass(slots=True)
+class TickerEvent(MarketEvent):
+    """
+    Real-time ticker update.
+    """
 
-# Order book update.
+    price: Decimal
+    volume: Decimal
+
+    def __post_init__(self) -> None:
+        self.event_type = "ticker"
 
 
-    event_type: str = "market.orderbook"
+@dataclass(slots=True)
+class CandleEvent(MarketEvent):
+    """
+    OHLC candle update.
+    """
 
-    exchange: str
-    symbol: str
-    bids: list
-    asks: list
+    open: Decimal
+    high: Decimal
+    low: Decimal
+    close: Decimal
+    volume: Decimal
+    timeframe: str
+
+    def __post_init__(self) -> None:
+        self.event_type = "candle"

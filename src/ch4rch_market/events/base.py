@@ -3,19 +3,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from uuid import UUID
-from uuid import uuid4
+
 
 
 @dataclass(slots=True)
 class Event:
     """
-    Base application event.
+    Base event class.
+
+    All internal events inherit from this.
     """
 
-    id: UUID = uuid4()
-
-    timestamp: datetime = datetime.now(
-        timezone.utc
-    )
+    event_type: str

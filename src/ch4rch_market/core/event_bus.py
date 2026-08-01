@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+
 from collections import defaultdict
-from collections.abc import Awaitable
-from collections.abc import Callable
-from typing import Type
+from collections.abc import Awaitable, Callable
+
 
 from ch4rch_market.events.base import Event
-from ch4rch_market.core.logger import logger
+
 
 
 EventHandler = Callable[
@@ -17,41 +17,50 @@ EventHandler = Callable[
 ]
 
 
+
 class EventBus:
     """
-    Typed asynchronous event bus.
+    Async internal message bus.
     """
+
 
     def __init__(self) -> None:
 
         self._handlers: dict[
-            Type[Event],
-            list[EventHandler],
+            str,
+            list[EventHandler]
         ] = defaultdict(list)
+
 
 
     def subscribe(
         self,
-        event_type: Type[Event],
+        event_type: str,
         handler: EventHandler,
     ) -> None:
 
+
         if handler not in self._handlers[event_type]:
+
             self._handlers[event_type].append(
                 handler
             )
 
 
+
     def unsubscribe(
         self,
-        event_type: Type[Event],
+        event_type: str,
         handler: EventHandler,
     ) -> None:
 
+
         if handler in self._handlers[event_type]:
+
             self._handlers[event_type].remove(
                 handler
             )
+
 
 
     async def publish(
@@ -59,20 +68,13 @@ class EventBus:
         event: Event,
     ) -> None:
 
+
         handlers = self._handlers.get(
-            type(event),
+            event.event_type,
             [],
         )
 
+
         for handler in handlers:
 
-            try:
-                await handler(event)
-
-            except Exception as error:
-
-                logger.error(
-                    "event_handler_failed",
-                    error=str(error),
-                    event=type(event).__name__,
-                )
+            await handler(event)

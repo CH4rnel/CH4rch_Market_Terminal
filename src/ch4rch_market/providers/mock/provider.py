@@ -7,7 +7,7 @@ import asyncio
 
 from ch4rch_market.providers.base import BaseProvider
 from ch4rch_market.providers.context import ProviderContext
-
+from ch4rch_market.events.market import TickerEvent
 
 class MockProvider(BaseProvider):
     """
