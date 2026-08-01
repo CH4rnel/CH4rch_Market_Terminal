@@ -1,28 +1,31 @@
 # ♃ ☿ 𓂀  OCCULT CONFIG LAYER 𓂀  ☿ ♃
 
-
-from ch4rch_market.providers.base import (
-    Provider,
-    ProviderState,
-)
+from __future__ import annotations
 
 
-class MockProvider(Provider):
+from ch4rch_market.providers.base import MarketProvider
+from ch4rch_market.events.provider import ProviderStartedEvent, ProviderStoppedEvent
 
+
+
+class MockProvider(MarketProvider):
 
     name = "mock"
 
 
     async def start(self) -> None:
 
-        self.state = ProviderState.STARTING
-
-        self.state = ProviderState.RUNNING
-
+        await self.event_bus.publish(
+            ProviderStartedEvent(
+                provider=self.name,
+            )
+        )
 
 
     async def stop(self) -> None:
 
-        self.state = ProviderState.STOPPING
-
-        self.state = ProviderState.STOPPED
+        await self.event_bus.publish(
+            ProviderStoppedEvent(
+                provider=self.name,
+            )
+        )

@@ -10,17 +10,15 @@ from collections.abc import Awaitable, Callable
 from ch4rch_market.events.base import Event
 
 
-
 EventHandler = Callable[
     [Event],
     Awaitable[None],
 ]
 
 
-
 class EventBus:
     """
-    Async internal message bus.
+    Asynchronous application event bus.
     """
 
 
@@ -28,7 +26,7 @@ class EventBus:
 
         self._handlers: dict[
             str,
-            list[EventHandler]
+            list[EventHandler],
         ] = defaultdict(list)
 
 
@@ -38,7 +36,9 @@ class EventBus:
         event_type: str,
         handler: EventHandler,
     ) -> None:
-
+        """
+        Register event handler.
+        """
 
         if handler not in self._handlers[event_type]:
 
@@ -53,7 +53,9 @@ class EventBus:
         event_type: str,
         handler: EventHandler,
     ) -> None:
-
+        """
+        Remove event handler.
+        """
 
         if handler in self._handlers[event_type]:
 
@@ -67,6 +69,17 @@ class EventBus:
         self,
         event: Event,
     ) -> None:
+        """
+        Publish event to subscribers.
+        """
+
+        if not isinstance(
+            event,
+            Event,
+        ):
+            raise TypeError(
+                "EventBus accepts only Event instances"
+            )
 
 
         handlers = self._handlers.get(
@@ -77,4 +90,15 @@ class EventBus:
 
         for handler in handlers:
 
-            await handler(event)
+            try:
+
+                await handler(
+                    event
+                )
+
+
+            except Exception as error:
+
+                print(
+                    f"Event handler failed: {error}"
+                )

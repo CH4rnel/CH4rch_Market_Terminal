@@ -3,15 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import ClassVar
 
 
 
-@dataclass(slots=True)
+@dataclass
 class Event:
     """
-    Base event class.
-
-    All internal events inherit from this.
+    Base application event.
     """
 
-    event_type: str
+    event_type: ClassVar[str] = "event"

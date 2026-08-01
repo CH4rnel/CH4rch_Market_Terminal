@@ -1,23 +1,31 @@
 # ♃ ☿ 𓂀  OCCULT CONFIG LAYER 𓂀  ☿ ♃
 
-
-# DexScreener provider.
-
-
-from ch4rch_market.providers.base import BaseProvider
+from __future__ import annotations
 
 
-class DexScreenerProvider(BaseProvider):
+from ch4rch_market.providers.base import MarketProvider
+from ch4rch_market.events.provider import ProviderStartedEvent, ProviderStoppedEvent
 
-# DexScreener market data provider.
 
 
-    @property
-    def name(self) -> str:
-        return "dexscreener"
+class DexScreenerProvider(MarketProvider):
+
+    name = "dexscreener"
+
 
     async def start(self) -> None:
-        print(f"{self.name}: started")
+
+        await self.event_bus.publish(
+            ProviderStartedEvent(
+                provider=self.name,
+            )
+        )
+
 
     async def stop(self) -> None:
-        print(f"{self.name}: stopped")
+
+        await self.event_bus.publish(
+            ProviderStoppedEvent(
+                provider=self.name,
+            )
+        )

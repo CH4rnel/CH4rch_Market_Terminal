@@ -3,50 +3,34 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from enum import Enum
+
+from ch4rch_market.core.event_bus import EventBus
 
 
-class ProviderState(str, Enum):
+class MarketProvider(ABC):
     """
-    Provider lifecycle state.
-    """
-
-    CREATED = "created"
-    STARTING = "starting"
-    RUNNING = "running"
-    STOPPING = "stopping"
-    STOPPED = "stopped"
-    FAILED = "failed"
-
-
-class Provider(ABC):
-    """
-    Base provider interface.
+    Base market data provider interface.
     """
 
     name: str = "unknown"
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        event_bus: EventBus,
+    ) -> None:
 
-        self.state = ProviderState.CREATED
-
+        self.event_bus = event_bus
 
     @abstractmethod
     async def start(self) -> None:
         """
         Start provider.
         """
-        ...
-
+        raise NotImplementedError
 
     @abstractmethod
     async def stop(self) -> None:
         """
         Stop provider.
         """
-        ...
-
-
-    def is_running(self) -> bool:
-
-        return self.state == ProviderState.RUNNING
+        raise NotImplementedError
