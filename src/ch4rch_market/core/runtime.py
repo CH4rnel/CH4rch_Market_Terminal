@@ -9,29 +9,21 @@ from ch4rch_market.core.event_bus import EventBus
 from ch4rch_market.core.lifecycle import RuntimeState
 from ch4rch_market.core.logger import logger
 from ch4rch_market.core.logger import setup_logging
+from ch4rch_market.core.registry import ServiceRegistry
 
 from ch4rch_market.core.modules.manager import ModuleManager
 from ch4rch_market.core.modules.system import SystemModule
 
-from ch4rch_market.core.registry import ServiceRegistry
-
-
-from ch4rch_market.providers.context import ProviderContext
-from ch4rch_market.providers.mock import MockProvider
 from ch4rch_market.providers.registry import ProviderRegistry
+from ch4rch_market.providers.manager import ProviderManager
+
+from ch4rch_market.providers.mock.provider import MockProvider
 
 
 
 class Runtime:
     """
     Main application runtime.
-
-    Responsible for:
-    - configuration
-    - logging
-    - event bus
-    - modules
-    - providers lifecycle
     """
 
 
@@ -42,7 +34,7 @@ class Runtime:
 
 
         setup_logging(
-            self.settings.log_level
+            self.settings.log_level,
         )
 
 
@@ -61,42 +53,12 @@ class Runtime:
         self.provider_registry = ProviderRegistry()
 
 
+        self.provider_manager = ProviderManager(
+            self.provider_registry,
+        )
+
 
         self.state = RuntimeState.CREATED
-
-
-
-        self._configure_modules()
-
-
-        self._configure_providers()
-
-
-
-    def _configure_modules(self) -> None:
-
-
-        self.module_manager.register(
-            SystemModule()
-        )
-
-
-
-    def _configure_providers(self) -> None:
-
-
-        context = ProviderContext(
-            settings=self.settings,
-            logger=self.logger,
-            event_bus=self.event_bus,
-        )
-
-
-        self.provider_registry.register(
-            MockProvider(
-                context
-            )
-        )
 
 
 
@@ -104,7 +66,6 @@ class Runtime:
 
 
         self.state = RuntimeState.INITIALIZING
-
 
 
         self.registry.register(
@@ -126,26 +87,43 @@ class Runtime:
 
 
         self.registry.register(
-            "providers",
-            self.provider_registry,
+            "provider_manager",
+            self.provider_manager,
         )
 
 
+        self.module_manager.register(
+            SystemModule()
+        )
+
+
+        self.provider_manager.register(
+            MockProvider()
+        )
+
+
+        self.state = RuntimeState.STARTING
+
+
+
+        self.logger.info(
+            "runtime_started",
+            version=self.settings.version,
+        )
+
+
+        await self.provider_manager.start_all()
+
 
         await self.module_manager.start_all()
-
-
-        await self.provider_registry.start_all()
 
 
 
         self.state = RuntimeState.RUNNING
 
 
-
         self.logger.info(
             "runtime_running",
-            version=self.settings.version,
         )
 
 
@@ -156,26 +134,21 @@ class Runtime:
         self.state = RuntimeState.STOPPING
 
 
-
         self.logger.info(
             "runtime_stopping",
         )
 
 
-
-        await self.provider_registry.stop_all()
-
-
         await self.module_manager.stop_all()
 
+
+        await self.provider_manager.stop_all()
 
 
         self.registry.clear()
 
 
-
         self.state = RuntimeState.STOPPED
-
 
 
         self.logger.info(
