@@ -2,94 +2,51 @@
 
 from __future__ import annotations
 
-from abc import ABC
-from abc import abstractmethod
-
-from ch4rch_market.providers.context import ProviderContext
-from ch4rch_market.providers.lifecycle import ProviderState
+from abc import ABC, abstractmethod
+from enum import Enum
 
 
-class BaseProvider(ABC):
+class ProviderState(str, Enum):
     """
-    Base class for every market data provider.
+    Provider lifecycle state.
     """
 
-    def __init__(
-        self,
-        name: str,
-        context: ProviderContext,
-    ) -> None:
+    CREATED = "created"
+    STARTING = "starting"
+    RUNNING = "running"
+    STOPPING = "stopping"
+    STOPPED = "stopped"
+    FAILED = "failed"
 
-        self._name = name
-        self._context = context
-        self._state = ProviderState.CREATED
 
-    @property
-    def name(self) -> str:
-        return self._name
+class Provider(ABC):
+    """
+    Base provider interface.
+    """
 
-    @property
-    def context(self) -> ProviderContext:
-        return self._context
+    name: str = "unknown"
 
-    @property
-    def state(self) -> ProviderState:
-        return self._state
+    def __init__(self) -> None:
 
-    @property
-    def logger(self):
-        return self._context.logger.bind(
-            provider=self._name,
-        )
+        self.state = ProviderState.CREATED
 
-    @property
-    def event_bus(self):
-        return self._context.event_bus
 
-    @property
-    def settings(self):
-        return self._context.settings
-
+    @abstractmethod
     async def start(self) -> None:
+        """
+        Start provider.
+        """
+        ...
 
-        self._state = ProviderState.INITIALIZING
 
-        self.logger.info(
-            "provider_initializing",
-        )
-
-        await self.connect()
-
-        self._state = ProviderState.RUNNING
-
-        self.logger.info(
-            "provider_running",
-        )
-
+    @abstractmethod
     async def stop(self) -> None:
-
-        self._state = ProviderState.STOPPING
-
-        self.logger.info(
-            "provider_stopping",
-        )
-
-        await self.disconnect()
-
-        self._state = ProviderState.STOPPED
-
-        self.logger.info(
-            "provider_stopped",
-        )
-
-    @abstractmethod
-    async def connect(self) -> None:
         """
-        Establish provider connection.
+        Stop provider.
         """
+        ...
 
-    @abstractmethod
-    async def disconnect(self) -> None:
-        """
-        Close provider connection.
-        """
+
+    def is_running(self) -> bool:
+
+        return self.state == ProviderState.RUNNING

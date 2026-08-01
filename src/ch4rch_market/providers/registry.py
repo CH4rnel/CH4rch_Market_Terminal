@@ -2,102 +2,40 @@
 
 from __future__ import annotations
 
-from ch4rch_market.providers.base import BaseProvider
+from ch4rch_market.providers.base import Provider
 
 
 class ProviderRegistry:
     """
-    Registry and lifecycle manager for market providers.
+    Provider dependency registry.
     """
 
     def __init__(self) -> None:
 
-        self._providers: dict[str, BaseProvider] = {}
+        self._providers: dict[str, Provider] = {}
+
 
     def register(
         self,
-        provider: BaseProvider,
+        provider: Provider,
     ) -> None:
-        """
-        Register provider instance.
-        """
-
-        if provider.name in self._providers:
-            raise ValueError(
-                f"Provider already registered: {provider.name}"
-            )
 
         self._providers[provider.name] = provider
-
-        provider.logger.info(
-            "provider_registered",
-        )
-
-
-    def unregister(
-        self,
-        name: str,
-    ) -> None:
-        """
-        Remove provider from registry.
-        """
-
-        self._providers.pop(
-            name,
-            None,
-        )
 
 
     def get(
         self,
         name: str,
-    ) -> BaseProvider:
+    ) -> Provider | None:
 
-        provider = self._providers.get(name)
-
-        if provider is None:
-            raise KeyError(
-                f"Unknown provider: {name}"
-            )
-
-        return provider
+        return self._providers.get(name)
 
 
-    def list(self) -> list[str]:
-        """
-        Return registered provider names.
-        """
+    def all(self) -> list[Provider]:
 
-        return list(
-            self._providers.keys()
-        )
-
-
-    async def start_all(self) -> None:
-        """
-        Start all registered providers.
-        """
-
-        for provider in self._providers.values():
-
-            await provider.start()
-
-
-    async def stop_all(self) -> None:
-        """
-        Stop all registered providers.
-        """
-
-        for provider in reversed(
-            list(self._providers.values())
-        ):
-
-            await provider.stop()
+        return list(self._providers.values())
 
 
     def clear(self) -> None:
-        """
-        Remove all providers.
-        """
 
         self._providers.clear()
