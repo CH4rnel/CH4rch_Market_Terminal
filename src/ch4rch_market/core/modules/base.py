@@ -1,26 +1,16 @@
 # ♃ ☿ 𓂀  OCCULT CONFIG LAYER 𓂀  ☿ ♃
 
-from __future__ import annotations
-
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 
 class Module(ABC):
-    """Base class for all runtime modules."""
 
-    @property
-    @abstractmethod
-    def name(self) -> str:
-        """Module name."""
-        ...
+    name: str
 
     @abstractmethod
     async def start(self) -> None:
-        """Start module."""
-        ...
+        pass
 
     @abstractmethod
     async def stop(self) -> None:
-        """Stop module."""
-        ...
+        pass
