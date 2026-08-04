@@ -2,15 +2,38 @@
 
 from __future__ import annotations
 
+
 from ch4rch_market.config.settings import settings
+
 from ch4rch_market.core.event_bus import EventBus
 from ch4rch_market.core.lifecycle import RuntimeState
-from ch4rch_market.core.logger import logger
-from ch4rch_market.core.logger import setup_logging
-from ch4rch_market.core.modules.manager import ModuleManager
+from ch4rch_market.core.logger import (
+    logger,
+    setup_logging,
+)
+
 from ch4rch_market.core.registry import ServiceRegistry
-from ch4rch_market.providers.discovery import ProviderDiscovery
-from ch4rch_market.providers.manager import ProviderManager
+
+from ch4rch_market.core.modules.manager import (
+    ModuleManager,
+)
+
+from ch4rch_market.core.modules.system import (
+    SystemModule,
+)
+
+from ch4rch_market.providers.discovery import (
+    ProviderDiscovery,
+)
+
+from ch4rch_market.providers.manager import (
+    ProviderManager,
+)
+
+from ch4rch_market.services.market_storage import (
+    MarketStorageService,
+)
+
 
 
 class Runtime:
@@ -19,7 +42,10 @@ class Runtime:
     """
 
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+    ) -> None:
+
 
         self.settings = settings
 
@@ -38,11 +64,14 @@ class Runtime:
         self.registry = ServiceRegistry()
 
 
+        self.state = RuntimeState.CREATED
+
+
         self.module_manager = ModuleManager()
 
 
-        self.provider_discovery = ProviderDiscovery(
-            self.event_bus,
+        self.module_manager.register(
+            SystemModule(),
         )
 
 
@@ -51,16 +80,23 @@ class Runtime:
         )
 
 
-        self.state = RuntimeState.CREATED
+        self.provider_discovery = ProviderDiscovery(
+            self.event_bus,
+        )
+
+
+        self.market_storage = MarketStorageService(
+            self.event_bus,
+        )
 
 
 
-    async def start(self) -> None:
-        """
-        Start runtime.
-        """
+    async def start(
+        self,
+    ) -> None:
 
-        self.state = RuntimeState.INITIALIZING
+
+        self.state = RuntimeState.STARTING
 
 
         self.registry.register(
@@ -70,37 +106,24 @@ class Runtime:
 
 
         self.registry.register(
-            "logger",
-            self.logger,
-        )
-
-
-        self.registry.register(
             "event_bus",
             self.event_bus,
         )
 
 
-        providers = self.provider_discovery.discover()
-
-
-        for provider in providers:
-
-            self.provider_manager.register(
-                provider,
-            )
-
-
-        self.state = RuntimeState.STARTING
-
-
-        self.logger.info(
-            "runtime_started",
-            version=self.settings.version,
+        self.registry.register(
+            "logger",
+            self.logger,
         )
 
 
+        self.provider_discovery.discover()
+
+
         await self.module_manager.start_all()
+
+
+        await self.market_storage.start()
 
 
         await self.provider_manager.start_all()
@@ -115,10 +138,10 @@ class Runtime:
 
 
 
-    async def stop(self) -> None:
-        """
-        Stop runtime.
-        """
+    async def stop(
+        self,
+    ) -> None:
+
 
         self.state = RuntimeState.STOPPING
 
@@ -129,6 +152,9 @@ class Runtime:
 
 
         await self.provider_manager.stop_all()
+
+
+        await self.market_storage.stop()
 
 
         await self.module_manager.stop_all()
