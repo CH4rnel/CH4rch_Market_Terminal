@@ -29,3 +29,9 @@ class BinanceProvider(MarketProvider):
                 provider=self.name,
             )
         )
+
+    async def run(self) -> None:
+
+        while True:
+
+            await asyncio.sleep(1)
