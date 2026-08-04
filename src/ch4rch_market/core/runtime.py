@@ -34,7 +34,10 @@ from ch4rch_market.services.market_storage import (
     MarketStorageService,
 )
 
-
+from ch4rch_market.storage import (
+    Database,
+    SQLiteManager,
+)
 
 class Runtime:
     """
@@ -89,7 +92,14 @@ class Runtime:
             self.event_bus,
         )
 
+        self.database = Database(
+        "data/ch4rch_market.db",
+        )
 
+
+        self.sqlite = SQLiteManager(
+            self.database,
+        )
 
     async def start(
         self,

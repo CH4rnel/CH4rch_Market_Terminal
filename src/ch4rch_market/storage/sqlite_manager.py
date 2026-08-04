@@ -1,106 +1,105 @@
-# ♃ ☿ 𓂀  SQLITE MANAGER LAYER 𓂀  ☿ ♃
+# ♃ ☿ 𓂀  OCCULT CONFIG LAYER 𓂀  ☿ ♃
+
+from __future__ import annotations
 
 
-from pathlib import Path
+from ch4rch_market.core.logger import logger
+from ch4rch_market.storage.database import Database
 
-import aiosqlite
 
 
 class SQLiteManager:
+    """
+    SQLite lifecycle manager.
+    """
 
-    # SQLite database manager.
+
 
     def __init__(
         self,
-        database_path: Path,
+        database: Database,
     ) -> None:
 
-        self.database_path = database_path
-        self.connection: aiosqlite.Connection | None = None
+        self.database = database
 
-    async def connect(self) -> None:
 
-        # Connect to database.
 
-        self.connection = await aiosqlite.connect(
-            self.database_path,
-        )
-
-        self.connection.row_factory = aiosqlite.Row
-
-    async def close(self) -> None:
-
-        # Close database connection.
-
-        if self.connection is not None:
-            await self.connection.close()
-
-    async def execute(
+    async def start(
         self,
-        query: str,
-        parameters: tuple = (),
     ) -> None:
 
-        # Execute SQL query.
+        self.database.connect()
 
-        if self.connection is None:
-            raise RuntimeError(
-                "Database is not connected."
-            )
 
-        await self.connection.execute(
-            query,
-            parameters,
+        self.database.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS pairs (
+
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                symbol TEXT UNIQUE NOT NULL,
+
+                exchange TEXT NOT NULL
+
+            );
+
+
+            CREATE TABLE IF NOT EXISTS candles (
+
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                symbol TEXT NOT NULL,
+
+                timeframe TEXT NOT NULL,
+
+                open REAL,
+
+                high REAL,
+
+                low REAL,
+
+                close REAL,
+
+                volume REAL,
+
+                timestamp INTEGER
+
+            );
+
+
+            CREATE TABLE IF NOT EXISTS trades (
+
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+                symbol TEXT NOT NULL,
+
+                price REAL,
+
+                quantity REAL,
+
+                timestamp INTEGER
+
+            );
+
+            """
         )
 
-        await self.connection.commit()
 
-    async def fetch_one(
+        logger.info(
+            "sqlite_started",
+            path=str(self.database.path),
+        )
+
+
+
+    async def stop(
         self,
-        query: str,
-        parameters: tuple = (),
-    ) -> dict | None:
+    ) -> None:
 
-        # Fetch one record.
 
-        if self.connection is None:
-            raise RuntimeError(
-                "Database is not connected."
-            )
+        self.database.close()
 
-        cursor = await self.connection.execute(
-            query,
-            parameters,
+
+        logger.info(
+            "sqlite_stopped",
         )
-
-        row = await cursor.fetchone()
-
-        if row is None:
-            return None
-
-        return dict(row)
-
-    async def fetch_all(
-        self,
-        query: str,
-        parameters: tuple = (),
-    ) -> list[dict]:
-
-        # Fetch all records.
-
-        if self.connection is None:
-            raise RuntimeError(
-                "Database is not connected."
-            )
-
-        cursor = await self.connection.execute(
-            query,
-            parameters,
-        )
-
-        rows = await cursor.fetchall()
-
-        return [
-            dict(row)
-            for row in rows
-        ]
