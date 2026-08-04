@@ -2,14 +2,15 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 
 from ch4rch_market.core.event_bus import EventBus
 
 
 class MarketProvider(ABC):
     """
-    Base market data provider interface.
+    Base interface for all market data providers.
     """
 
     name: str = "unknown"
@@ -24,13 +25,23 @@ class MarketProvider(ABC):
     @abstractmethod
     async def start(self) -> None:
         """
-        Start provider.
+        Initialize provider resources.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    async def run(self) -> None:
+        """
+        Main provider loop.
+
+        This coroutine should run until cancelled and continuously
+        produce market events.
         """
         raise NotImplementedError
 
     @abstractmethod
     async def stop(self) -> None:
         """
-        Stop provider.
+        Release provider resources.
         """
         raise NotImplementedError

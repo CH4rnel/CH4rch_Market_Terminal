@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-from ch4rch_market.core.logger import logger
+import asyncio
 
-from ch4rch_market.providers.base import Provider
+from ch4rch_market.core.logger import logger
+from ch4rch_market.providers.base import MarketProvider
 from ch4rch_market.providers.registry import ProviderRegistry
 
 
 class ProviderManager:
-    """
-    Controls provider lifecycle.
-    """
-
+    """Runs and supervises provider lifecycle."""
 
     def __init__(
         self,
@@ -21,51 +19,47 @@ class ProviderManager:
 
         self.registry = registry
 
+        self._tasks: dict[str, asyncio.Task] = {}
 
-    def register(
-        self,
-        provider: Provider,
-    ) -> None:
+    async def start(self) -> None:
 
-        self.registry.register(provider)
-
-        logger.info(
-            "provider_registered",
-            provider=provider.name,
-        )
-
-
-    async def start_all(self) -> None:
-
-        for provider in self.registry.all():
+        for provider in self.registry.providers.values():
 
             logger.info(
-                "provider_starting",
+                "provider_start",
                 provider=provider.name,
             )
 
             await provider.start()
 
-            logger.info(
-                "provider_started",
-                provider=provider.name,
+            self._tasks[provider.name] = asyncio.create_task(
+                provider.run(),
+                name=provider.name,
             )
 
+    async def stop(self) -> None:
 
-    async def stop_all(self) -> None:
+        for task in self._tasks.values():
+
+            task.cancel()
+
+        for task in self._tasks.values():
+
+            try:
+                await task
+
+            except asyncio.CancelledError:
+                pass
 
         for provider in reversed(
-            self.registry.all()
+            list(self.registry.providers.values())
         ):
 
             logger.info(
-                "provider_stopping",
+                "provider_stop",
                 provider=provider.name,
             )
 
             await provider.stop()
 
-            logger.info(
-                "provider_stopped",
-                provider=provider.name,
-            )
+        self._tasks.clear()
