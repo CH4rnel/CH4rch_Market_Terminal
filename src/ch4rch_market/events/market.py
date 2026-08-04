@@ -3,48 +3,75 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal
 
 from ch4rch_market.events.base import Event
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, kw_only=True)
 class MarketEvent(Event):
     """
-    Base market event.
+    Base class for all market events.
     """
 
     symbol: str
 
-    def __post_init__(self) -> None:
-        self.event_type = "market"
 
-
-@dataclass(slots=True)
+@dataclass(slots=True, kw_only=True)
 class TickerEvent(MarketEvent):
     """
     Real-time ticker update.
     """
 
-    price: Decimal
-    volume: Decimal
+    price: float
 
-    def __post_init__(self) -> None:
-        self.event_type = "ticker"
+    volume: float
+
+    event_time: int
+
+    event_type: str = "market.ticker"
 
 
-@dataclass(slots=True)
+@dataclass(slots=True, kw_only=True)
+class TradeEvent(MarketEvent):
+    """
+    Real-time trade event.
+    """
+
+    price: float
+
+    quantity: float
+
+    trade_id: int
+
+    buyer_maker: bool
+
+    event_time: int
+
+    event_type: str = "market.trade"
+
+
+@dataclass(slots=True, kw_only=True)
 class CandleEvent(MarketEvent):
     """
-    OHLC candle update.
+    OHLCV candle update.
     """
 
-    open: Decimal
-    high: Decimal
-    low: Decimal
-    close: Decimal
-    volume: Decimal
-    timeframe: str
+    interval: str
 
-    def __post_init__(self) -> None:
-        self.event_type = "candle"
+    open: float
+
+    high: float
+
+    low: float
+
+    close: float
+
+    volume: float
+
+    open_time: int
+
+    close_time: int
+
+    closed: bool
+
+    event_type: str = "market.candle"
