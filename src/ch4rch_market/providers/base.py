@@ -10,10 +10,11 @@ from ch4rch_market.core.event_bus import EventBus
 
 class MarketProvider(ABC):
     """
-    Base interface for all market data providers.
+    Base market provider interface.
     """
 
     name: str = "unknown"
+
 
     def __init__(
         self,
@@ -22,26 +23,17 @@ class MarketProvider(ABC):
 
         self.event_bus = event_bus
 
+
     @abstractmethod
     async def start(self) -> None:
-        """
-        Initialize provider resources.
-        """
-        raise NotImplementedError
+        pass
+
 
     @abstractmethod
     async def run(self) -> None:
-        """
-        Main provider loop.
+        pass
 
-        This coroutine should run until cancelled and continuously
-        produce market events.
-        """
-        raise NotImplementedError
 
     @abstractmethod
     async def stop(self) -> None:
-        """
-        Release provider resources.
-        """
-        raise NotImplementedError
+        pass
