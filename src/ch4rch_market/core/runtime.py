@@ -2,19 +2,15 @@
 
 from __future__ import annotations
 
-
 from ch4rch_market.config.settings import settings
-
 from ch4rch_market.core.event_bus import EventBus
 from ch4rch_market.core.lifecycle import RuntimeState
 from ch4rch_market.core.logger import logger
 from ch4rch_market.core.logger import setup_logging
-from ch4rch_market.core.registry import ServiceRegistry
-
 from ch4rch_market.core.modules.manager import ModuleManager
-from ch4rch_market.core.modules.system import SystemModule
-
+from ch4rch_market.core.registry import ServiceRegistry
 from ch4rch_market.providers.discovery import ProviderDiscovery
+from ch4rch_market.providers.manager import ProviderManager
 
 
 class Runtime:
@@ -27,9 +23,11 @@ class Runtime:
 
         self.settings = settings
 
+
         setup_logging(
             self.settings.log_level,
         )
+
 
         self.logger = logger
 
@@ -48,7 +46,9 @@ class Runtime:
         )
 
 
-        self.providers = []
+        self.provider_manager = ProviderManager(
+            self.event_bus,
+        )
 
 
         self.state = RuntimeState.CREATED
@@ -56,6 +56,9 @@ class Runtime:
 
 
     async def start(self) -> None:
+        """
+        Start runtime.
+        """
 
         self.state = RuntimeState.INITIALIZING
 
@@ -78,48 +81,29 @@ class Runtime:
         )
 
 
-        #
-        # Core modules
-        #
-
-        self.module_manager.register(
-            SystemModule()
-        )
+        providers = self.provider_discovery.discover()
 
 
-        #
-        # Providers discovery
-        #
+        for provider in providers:
 
-        self.providers = (
-            self.provider_discovery.discover()
-        )
-
-
-        for provider in self.providers:
-
-            self.logger.info(
-                "provider_registered",
-                provider=provider.name,
+            self.provider_manager.register(
+                provider,
             )
 
 
         self.state = RuntimeState.STARTING
 
 
-        await self.module_manager.start_all()
-
-
-        for provider in self.providers:
-
-            await provider.start()
-
-
-
         self.logger.info(
             "runtime_started",
             version=self.settings.version,
         )
+
+
+        await self.module_manager.start_all()
+
+
+        await self.provider_manager.start_all()
 
 
         self.state = RuntimeState.RUNNING
@@ -132,6 +116,9 @@ class Runtime:
 
 
     async def stop(self) -> None:
+        """
+        Stop runtime.
+        """
 
         self.state = RuntimeState.STOPPING
 
@@ -141,16 +128,10 @@ class Runtime:
         )
 
 
-        for provider in reversed(
-            self.providers
-        ):
-
-            await provider.stop()
-
+        await self.provider_manager.stop_all()
 
 
         await self.module_manager.stop_all()
-
 
 
         self.registry.clear()

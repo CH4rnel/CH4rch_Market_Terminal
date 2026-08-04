@@ -4,26 +4,47 @@ from __future__ import annotations
 
 import asyncio
 
+from ch4rch_market.core.event_bus import EventBus
 from ch4rch_market.core.logger import logger
 from ch4rch_market.providers.base import MarketProvider
-from ch4rch_market.providers.registry import ProviderRegistry
 
 
 class ProviderManager:
-    """Runs and supervises provider lifecycle."""
+    """
+    Async lifecycle manager for market providers.
+    """
 
     def __init__(
         self,
-        registry: ProviderRegistry,
+        event_bus: EventBus,
     ) -> None:
 
-        self.registry = registry
+        self.event_bus = event_bus
 
-        self._tasks: dict[str, asyncio.Task] = {}
+        self._providers: list[MarketProvider] = []
 
-    async def start(self) -> None:
+        self._tasks: list[asyncio.Task] = []
 
-        for provider in self.registry.providers.values():
+
+    def register(
+        self,
+        provider: MarketProvider,
+    ) -> None:
+
+        self._providers.append(provider)
+
+        logger.info(
+            "provider_registered",
+            provider=provider.name,
+        )
+
+
+    async def start_all(self) -> None:
+        """
+        Start all providers.
+        """
+
+        for provider in self._providers:
 
             logger.info(
                 "provider_start",
@@ -32,28 +53,37 @@ class ProviderManager:
 
             await provider.start()
 
-            self._tasks[provider.name] = asyncio.create_task(
-                provider.run(),
-                name=provider.name,
+            task = asyncio.create_task(
+                self._run_provider(provider)
             )
 
-    async def stop(self) -> None:
+            self._tasks.append(task)
 
-        for task in self._tasks.values():
 
-            task.cancel()
+    async def _run_provider(
+        self,
+        provider: MarketProvider,
+    ) -> None:
 
-        for task in self._tasks.values():
+        try:
 
-            try:
-                await task
+            await provider.run()
 
-            except asyncio.CancelledError:
-                pass
+        except Exception as error:
 
-        for provider in reversed(
-            list(self.registry.providers.values())
-        ):
+            logger.error(
+                "provider_failed",
+                provider=provider.name,
+                error=str(error),
+            )
+
+
+    async def stop_all(self) -> None:
+        """
+        Stop all providers.
+        """
+
+        for provider in reversed(self._providers):
 
             logger.info(
                 "provider_stop",
@@ -61,5 +91,13 @@ class ProviderManager:
             )
 
             await provider.stop()
+
+
+        for task in self._tasks:
+
+            if not task.done():
+
+                task.cancel()
+
 
         self._tasks.clear()
