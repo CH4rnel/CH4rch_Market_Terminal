@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-
 from ch4rch_market.providers.base import MarketProvider
-from ch4rch_market.events.provider import ProviderStartedEvent, ProviderStoppedEvent
-
 
 
 class DexScreenerProvider(MarketProvider):
@@ -15,17 +12,23 @@ class DexScreenerProvider(MarketProvider):
 
     async def start(self) -> None:
 
-        await self.event_bus.publish(
-            ProviderStartedEvent(
-                provider=self.name,
-            )
-        )
+        self.running = True
 
 
     async def stop(self) -> None:
 
-        await self.event_bus.publish(
-            ProviderStoppedEvent(
-                provider=self.name,
-            )
-        )
+        self.running = False
+
+
+    async def run(self) -> None:
+        """
+        DexScreener background loop.
+        """
+
+        while self.running:
+
+            # TODO:
+            # websocket / REST polling
+            # market events publishing
+
+            break
