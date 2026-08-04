@@ -2,42 +2,26 @@
 
 from __future__ import annotations
 
-
-from ch4rch_market.config.settings import settings
+import asyncio
 
 from ch4rch_market.core.event_bus import EventBus
-from ch4rch_market.core.lifecycle import RuntimeState
-from ch4rch_market.core.logger import (
-    logger,
-    setup_logging,
-)
+from ch4rch_market.core.logger import logger
 
-from ch4rch_market.core.registry import ServiceRegistry
+from ch4rch_market.core.modules.manager import ModuleManager
+from ch4rch_market.core.modules.system import SystemModule
 
-from ch4rch_market.core.modules.manager import (
-    ModuleManager,
-)
-
-from ch4rch_market.core.modules.system import (
-    SystemModule,
-)
-
-from ch4rch_market.providers.discovery import (
-    ProviderDiscovery,
-)
-
-from ch4rch_market.providers.manager import (
-    ProviderManager,
-)
-
-from ch4rch_market.services.market_storage import (
-    MarketStorageService,
-)
+from ch4rch_market.providers.discovery import ProviderDiscovery
+from ch4rch_market.providers.manager import ProviderManager
 
 from ch4rch_market.storage import (
     Database,
     SQLiteManager,
 )
+
+from ch4rch_market.services.runtime import (
+    StorageService,
+)
+
 
 class Runtime:
     """
@@ -45,40 +29,32 @@ class Runtime:
     """
 
 
-    def __init__(
-        self,
-    ) -> None:
+    def __init__(self) -> None:
 
-
-        self.settings = settings
-
-
-        setup_logging(
-            self.settings.log_level,
-        )
-
-
-        self.logger = logger
+        self.state = "created"
 
 
         self.event_bus = EventBus()
 
 
-        self.registry = ServiceRegistry()
-
-
-        self.state = RuntimeState.CREATED
-
-
         self.module_manager = ModuleManager()
 
-
         self.module_manager.register(
-            SystemModule(),
+            SystemModule()
         )
 
 
-        self.provider_manager = ProviderManager(
+        self.database = Database(
+            "data/ch4rch_market.db",
+        )
+
+
+        self.sqlite = SQLiteManager(
+            self.database,
+        )
+
+
+        self.storage_service = StorageService(
             self.event_bus,
         )
 
@@ -87,64 +63,76 @@ class Runtime:
             self.event_bus,
         )
 
-
-        self.market_storage = MarketStorageService(
+        self.provider_manager = ProviderManager(
             self.event_bus,
         )
 
-        self.database = Database(
-        "data/ch4rch_market.db",
-        )
-
-
-        self.sqlite = SQLiteManager(
-            self.database,
-        )
 
     async def start(
         self,
     ) -> None:
 
-
-        self.state = RuntimeState.STARTING
-
-
-        self.registry.register(
-            "settings",
-            self.settings,
-        )
+        self.state = "starting"
 
 
-        self.registry.register(
-            "event_bus",
-            self.event_bus,
-        )
+        #
+        # Database
+        #
+
+        await self.sqlite.start()
 
 
-        self.registry.register(
-            "logger",
-            self.logger,
-        )
+        #
+        # Storage event consumers
+        #
+
+        await self.storage_service.start()
 
 
-        self.provider_discovery.discover()
 
+        #
+        # Modules
+        #
 
         await self.module_manager.start_all()
 
 
-        await self.market_storage.start()
+
+        #
+        # Providers
+        #
+
+        providers = self.provider_discovery.discover()
+
+
+        for provider in providers:
+
+            self.provider_manager.register(
+                provider
+            )
 
 
         await self.provider_manager.start_all()
 
 
-        self.state = RuntimeState.RUNNING
+
+        self.state = "running"
 
 
-        self.logger.info(
-            "runtime_running",
+        logger.info(
+            "runtime_started",
         )
+
+
+        #
+        # Keep runtime alive
+        #
+
+        while self.state == "running":
+
+            await asyncio.sleep(
+                1
+            )
 
 
 
@@ -152,30 +140,45 @@ class Runtime:
         self,
     ) -> None:
 
+        self.state = "stopping"
 
-        self.state = RuntimeState.STOPPING
 
 
-        self.logger.info(
-            "runtime_stopping",
-        )
-
+        #
+        # Providers
+        #
 
         await self.provider_manager.stop_all()
 
 
-        await self.market_storage.stop()
 
+        #
+        # Modules
+        #
 
         await self.module_manager.stop_all()
 
 
-        self.registry.clear()
+
+        #
+        # Storage
+        #
+
+        await self.storage_service.stop()
 
 
-        self.state = RuntimeState.STOPPED
+
+        #
+        # Database
+        #
+
+        await self.sqlite.stop()
 
 
-        self.logger.info(
+
+        self.state = "stopped"
+
+
+        logger.info(
             "runtime_stopped",
         )

@@ -2,13 +2,23 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime
 
 
-@dataclass
+
+@dataclass(slots=True)
 class Event:
     """
-    Base application event.
+    Base event type.
     """
 
-    event_type: str
+    event_type: str = field(
+        default="event",
+        init=False,
+    )
+
+    created_at: datetime = field(
+        default_factory=datetime.utcnow,
+        init=False,
+    )

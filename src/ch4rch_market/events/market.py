@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from decimal import Decimal
 
 from ch4rch_market.events.base import Event
 
 
-@dataclass
+
+@dataclass(slots=True)
 class MarketEvent(Event):
     """
     Base market event.
@@ -18,19 +18,23 @@ class MarketEvent(Event):
 
 
 
-@dataclass
+@dataclass(slots=True)
 class TickerEvent(MarketEvent):
     """
-    Real-time ticker update.
+    Live ticker update.
     """
 
-    price: Decimal
+    price: float
 
-    volume: Decimal
+    volume: float
+
+    def __post_init__(self) -> None:
+
+        self.event_type = "ticker"
 
 
 
-@dataclass
+@dataclass(slots=True)
 class CandleEvent(MarketEvent):
     """
     OHLC candle event.
@@ -38,19 +42,21 @@ class CandleEvent(MarketEvent):
 
     timeframe: str
 
-    open: Decimal
+    open: float
+    high: float
+    low: float
+    close: float
 
-    high: Decimal
-
-    low: Decimal
-
-    close: Decimal
-
-    volume: Decimal
+    volume: float
 
 
+    def __post_init__(self) -> None:
 
-@dataclass
+        self.event_type = "candle"
+
+
+
+@dataclass(slots=True)
 class TradeEvent(MarketEvent):
     """
     Executed trade event.
@@ -58,8 +64,13 @@ class TradeEvent(MarketEvent):
 
     trade_id: str
 
-    price: Decimal
+    price: float
 
-    amount: Decimal
+    quantity: float
 
     side: str
+
+
+    def __post_init__(self) -> None:
+
+        self.event_type = "trade"
